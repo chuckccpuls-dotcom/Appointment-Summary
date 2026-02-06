@@ -1,2 +1,0 @@
-# Beginner-Test
-COI Test

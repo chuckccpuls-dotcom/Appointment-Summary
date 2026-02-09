@@ -48,6 +48,7 @@
 
   .logo img {
     width: 100%;
+    height: auto;
   }
 
   .company {
@@ -114,7 +115,8 @@
 <!-- HEADER -->
 <div class="header">
   <div class="logo">
-    <img src="puls-logo.png" alt="Puls Logo">
+    <!-- LOGO: keep in same folder OR adjust path if in /assets -->
+    <img src="./puls-logo.png" alt="Puls Logo">
   </div>
   <div class="company">
     1 Sansome Street, Suite 3500, #10054, San Francisco, 94104<br>
@@ -155,7 +157,6 @@
   </div>
 </div>
 
-<!-- SUMMARY -->
 <h3>Appointment Summary</h3>
 
 <label>Inspection Note:</label>
@@ -234,10 +235,16 @@ function calculateTotal() {
 function downloadPDF() {
   calculateTotal();
 
+  const apptId = document.getElementById("appointmentId").value.trim();
+  const baseName = "Appointment Summary";
+  const fileName = apptId ? `${baseName} - ${apptId}` : baseName;
+
   const clone = document.body.cloneNode(true);
 
+  // remove buttons in print version
   clone.querySelectorAll("button").forEach(b => b.remove());
 
+  // flatten inputs
   clone.querySelectorAll("input, textarea, select").forEach(el => {
     let value = el.tagName === "SELECT"
       ? el.options[el.selectedIndex]?.text || ""
@@ -252,19 +259,22 @@ function downloadPDF() {
   });
 
   const win = window.open("", "_blank", "width=900,height=650");
+
   win.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Appointment Summary</title>
+      <title>${fileName}</title>
       <style>${document.querySelector("style").innerHTML}</style>
     </head>
     <body>
       ${clone.innerHTML}
       <script>
         window.onload = function() {
-          window.print();
-          window.onafterprint = function(){ window.close(); };
+          setTimeout(function() {
+            window.print();
+            window.onafterprint = function(){ window.close(); };
+          }, 300);
         };
       <\/script>
     </body>

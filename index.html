@@ -31,6 +31,10 @@
     display: block;
   }
 
+  th {
+    font-weight: 600;
+  }
+
   .header {
     display: flex;
     justify-content: space-between;
@@ -49,6 +53,7 @@
   .company {
     font-size: 13px;
     text-align: right;
+    line-height: 1.4;
   }
 
   .grid {
@@ -106,6 +111,7 @@
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div class="logo">
     <img src="puls-logo.png" alt="Puls Logo">
@@ -117,93 +123,155 @@
   </div>
 </div>
 
+<!-- CUSTOMER INFO -->
 <div class="grid">
   <div><label>Customer Name</label><input></div>
   <div><label>Appointment ID</label><input id="appointmentId"></div>
-  <div><label>Email Address</label><input></div>
-  <div><label>Date</label><input></div>
+  <div><label>Email Address</label><input type="email"></div>
+  <div><label>Date</label><input type="date"></div>
   <div><label>Phone Number</label><input></div>
   <div><label>Technician</label><input></div>
   <div class="full"><label>Address</label><input></div>
   <div>
     <label>Service Type</label>
-    <select><option>Inspection</option></select>
+    <select>
+      <option value="">Select</option>
+      <option>Inspection</option>
+      <option>Repair</option>
+      <option>Estimate</option>
+    </select>
   </div>
   <div>
     <label>Appliance Type</label>
-    <select><option>Refrigerator</option></select>
+    <select>
+      <option value="">Select</option>
+      <option>Refrigerator</option>
+      <option>Washer</option>
+      <option>Dryer</option>
+      <option>Dishwasher</option>
+      <option>Oven / Range</option>
+      <option>Microwave</option>
+    </select>
   </div>
 </div>
 
+<!-- SUMMARY -->
 <h3>Appointment Summary</h3>
+
 <label>Inspection Note:</label>
 <textarea></textarea>
 
 <label>Recommendation:</label>
 <textarea></textarea>
 
+<!-- LABOR -->
 <h3>Labor</h3>
 <table id="laborTable">
-  <tr><th>Description</th><th class="right">Amount</th></tr>
+  <tr>
+    <th>Description</th>
+    <th class="right">Amount</th>
+    <th></th>
+  </tr>
 </table>
+<button class="btn" onclick="addRow('laborTable')">+ Add Labor</button>
 
+<!-- PARTS -->
 <h3>Parts</h3>
 <table id="partsTable">
-  <tr><th>Description</th><th class="right">Amount</th></tr>
+  <tr>
+    <th>Description</th>
+    <th class="right">Amount</th>
+    <th></th>
+  </tr>
 </table>
+<button class="btn" onclick="addRow('partsTable')">+ Add Parts</button>
 
+<!-- TOTALS -->
 <table class="totals">
-  <tr><td>Total</td><td><input id="total"></td></tr>
+  <tr>
+    <td>S&amp;S Fee</td>
+    <td><input type="number" step="0.01" oninput="calculateTotal()"></td>
+  </tr>
+  <tr>
+    <td>Tax</td>
+    <td><input type="number" step="0.01" oninput="calculateTotal()"></td>
+  </tr>
+  <tr>
+    <td><strong>Total</strong></td>
+    <td><input type="number" step="0.01" id="total" readonly></td>
+  </tr>
 </table>
 
 <button class="btn" onclick="downloadPDF()">Download PDF</button>
 
+<!-- SCRIPTS -->
 <script>
+function addRow(tableId) {
+  const table = document.getElementById(tableId);
+  const row = table.insertRow(-1);
+  row.innerHTML = `
+    <td><input></td>
+    <td><input type="number" step="0.01" oninput="calculateTotal()"></td>
+    <td><button class="btn" onclick="removeRow(this)">✕</button></td>
+  `;
+}
+
+function removeRow(btn) {
+  btn.closest("tr").remove();
+  calculateTotal();
+}
+
+function calculateTotal() {
+  let sum = 0;
+  document.querySelectorAll("input[type='number']").forEach(input => {
+    if (input.id !== "total") {
+      sum += Number(input.value) || 0;
+    }
+  });
+  document.getElementById("total").value = sum.toFixed(2);
+}
+
 function downloadPDF() {
-  const title = "Appointment Summary";
+  calculateTotal();
 
   const clone = document.body.cloneNode(true);
 
-  // remove buttons
   clone.querySelectorAll("button").forEach(b => b.remove());
 
-  // flatten inputs, textareas, selects
   clone.querySelectorAll("input, textarea, select").forEach(el => {
-    let text = "";
-    if (el.tagName === "SELECT") {
-      text = el.options[el.selectedIndex]?.text || "";
-    } else {
-      text = el.value || "";
-    }
+    let value = el.tagName === "SELECT"
+      ? el.options[el.selectedIndex]?.text || ""
+      : el.value || "";
 
     const span = document.createElement("span");
-    span.textContent = text;
+    span.textContent = value;
     span.style.display = "block";
-    span.style.fontSize = "13px";
-    span.style.padding = "5px 0";
+    span.style.minHeight = "18px";
 
     el.replaceWith(span);
   });
 
-  const printWindow = window.open("", "_blank", "width=900,height=650");
-  printWindow.document.write(`
+  const win = window.open("", "_blank", "width=900,height=650");
+  win.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${title}</title>
+      <title>Appointment Summary</title>
       <style>${document.querySelector("style").innerHTML}</style>
     </head>
-    <body>${clone.innerHTML}
+    <body>
+      ${clone.innerHTML}
       <script>
         window.onload = function() {
           window.print();
-          window.onafterprint = function(){ window.close(); }
+          window.onafterprint = function(){ window.close(); };
         };
       <\/script>
     </body>
     </html>
   `);
-  printWindow.document.close();
+
+  win.document.close();
 }
 </script>
 
